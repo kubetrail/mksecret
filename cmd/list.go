@@ -20,7 +20,6 @@ import (
 	"strings"
 
 	"github.com/kubetrail/mkphrase/pkg/run"
-
 	"github.com/spf13/cobra"
 )
 
