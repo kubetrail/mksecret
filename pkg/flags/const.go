@@ -9,4 +9,5 @@ const (
 	Name    = "name"
 	Version = "version"
 	Force   = "force"
+	Encrypt = "encrypt"
 )

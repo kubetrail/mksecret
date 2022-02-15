@@ -1,6 +1,8 @@
 package run
 
 const (
-	AppName  = "mkphrase"
-	LabelKey = "managed-by"
+	AppName      = "mkphrase"
+	KeyManagedBy = "managed-by"
+	KeyEncrypted = "encrypted"
+	ValueTrue    = "true"
 )

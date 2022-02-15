@@ -66,7 +66,7 @@ func Delete(cmd *cobra.Command, args []string) error {
 	}
 
 	labels := secret.GetLabels()
-	if value, ok := labels[LabelKey]; !ok || value != AppName {
+	if value, ok := labels[KeyManagedBy]; !ok || value != AppName {
 		return fmt.Errorf("secret is not being managed by this app")
 	}
 

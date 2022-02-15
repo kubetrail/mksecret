@@ -34,7 +34,7 @@ var listCmd = &cobra.Command{
 		strings.ReplaceAll(
 			listCmdLong,
 			"labelKey",
-			run.LabelKey,
+			run.KeyManagedBy,
 		),
 		"appName",
 		run.AppName,

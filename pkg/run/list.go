@@ -37,7 +37,7 @@ func List(cmd *cobra.Command, args []string) error {
 		Parent:    fmt.Sprintf("projects/%s", persistentFlags.Project),
 		PageSize:  0,
 		PageToken: "",
-		Filter:    fmt.Sprintf("labels.%s=%s", LabelKey, AppName),
+		Filter:    fmt.Sprintf("labels.%s=%s", KeyManagedBy, AppName),
 	}
 
 	// Call the API.

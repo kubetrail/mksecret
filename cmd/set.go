@@ -37,5 +37,6 @@ func init() {
 	f := setCmd.Flags()
 	b := filepath.Base
 
-	f.String(b(flags.Name), "", "Name tag for the password (DNS1123 label format)")
+	f.String(b(flags.Name), "", "Name tag for the passphrase (DNS1123 label format)")
+	f.Bool(b(flags.Encrypt), false, "Encrypt passphrase by entering password")
 }
