@@ -63,6 +63,22 @@ Enter passphrase: tennis water wing code window leaf
                         leaf                            
 ```
 
+## encrypt phrases before storing
+Additionally encrypt phrases before storing by using `--encrypt` flag:
+```bash
+mkphrase set --encrypt
+Enter passphrase: bat country screen puzzle paper ice grain
+This input will be encrypted using your password
+Enter encryption password (min 8 char): 
+Enter encryption password again: 
+                  NAME                   VERSION               PHRASE              
+---------------------------------------+---------+---------------------------------
+  b9fc6cd0-dfc2-4297-b504-08f3da0a9773         1   bat country screen puzzle       
+                                                   paper ice grain                 
+```
+Behind the scenes the code generates an AES key deterministically using your
+password and then encrypts the input phrase using that AES key before storing.
+
 ## retrieve phrases
 Stored phrases can be listed:
 ```bash
@@ -89,6 +105,15 @@ mkphrase get my-phrase --version=2
                         leaf                            
 ```
 
+If the phrase was encrypted, you will be asked to provide the password:
+```bash
+mkphrase get b9fc6cd0-dfc2-4297-b504-08f3da0a9773
+Enter encryption password: 
+                  NAME                   VERSION               PHRASE              
+---------------------------------------+---------+---------------------------------
+  b9fc6cd0-dfc2-4297-b504-08f3da0a9773         1   bat country screen puzzle       
+                                                   paper ice grain                 
+```
 ## delete phrase
 When a named phrase is deleted, all versions of secret material are 
 deleted forever.

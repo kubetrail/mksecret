@@ -6,13 +6,16 @@ require (
 	cloud.google.com/go/secretmanager v1.1.0
 	github.com/google/uuid v1.1.2
 	github.com/googleapis/gax-go/v2 v2.1.1
+	github.com/monnand/dhkx v0.0.0-20180522003156-9e5b033f1ac4
+	github.com/mr-tron/base58 v1.2.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/sethvargo/go-password v0.2.0
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
-	google.golang.org/api v0.66.0
-	google.golang.org/genproto v0.0.0-20220201184016-50beb8ab5c44
-	google.golang.org/grpc v1.43.0
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
+	google.golang.org/api v0.67.0
+	google.golang.org/genproto v0.0.0-20220207164111-0872dc986b00
+	google.golang.org/grpc v1.44.0
 	k8s.io/apimachinery v0.23.3
 )
 
@@ -23,7 +26,7 @@ require (
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/go-cmp v0.5.6 // indirect
+	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
@@ -38,7 +41,7 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
