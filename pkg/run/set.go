@@ -137,7 +137,6 @@ func Set(cmd *cobra.Command, args []string) error {
 		if _, err := fmt.Fprintln(cmd.OutOrStdout()); err != nil {
 			return fmt.Errorf("failed to write to output: %w", err)
 		}
-		key, err = crypto.NewAesKeyFromPassphrase(encryptionKey)
 
 		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Enter encryption password again: "); err != nil {
 			return fmt.Errorf("failed to write to output: %w", err)
@@ -154,13 +153,16 @@ func Set(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("passwords do not match")
 		}
 
+		key, err = crypto.NewAesKeyFromPassphrase(encryptionKey)
 		if err != nil {
 			return fmt.Errorf("failed to generate new AES key: %w", err)
 		}
+
 		in, err := crypto.EncryptWithAesKey([]byte(input), key)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt input: %w", err)
 		}
+
 		input = base58.Encode(in)
 	}
 
