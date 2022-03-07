@@ -1,7 +1,7 @@
 package run
 
 const (
-	AppName      = "mkphrase"
+	AppName      = "mksecret"
 	KeyManagedBy = "managed-by"
 	KeyEncrypted = "encrypted"
 	ValueTrue    = "true"

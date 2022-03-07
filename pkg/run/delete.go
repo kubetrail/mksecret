@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
-	"github.com/kubetrail/mkphrase/pkg/flags"
+	"github.com/kubetrail/mksecret/pkg/flags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"

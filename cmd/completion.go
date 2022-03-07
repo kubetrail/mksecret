@@ -19,7 +19,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kubetrail/mkphrase/pkg/run"
+	"github.com/kubetrail/mksecret/pkg/run"
 	"github.com/spf13/cobra"
 )
 

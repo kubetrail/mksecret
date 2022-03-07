@@ -18,8 +18,8 @@ package cmd
 import (
 	"path/filepath"
 
-	"github.com/kubetrail/mkphrase/pkg/flags"
-	"github.com/kubetrail/mkphrase/pkg/run"
+	"github.com/kubetrail/mksecret/pkg/flags"
+	"github.com/kubetrail/mksecret/pkg/run"
 	"github.com/spf13/cobra"
 )
 

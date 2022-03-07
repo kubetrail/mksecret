@@ -20,7 +20,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kubetrail/mkphrase/pkg/flags"
+	"github.com/kubetrail/mksecret/pkg/flags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -29,7 +29,7 @@ var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "mkphrase",
+	Use:   "mksecret",
 	Short: "Store and retrieve crypto passphrases securely",
 	Long: `This CLI tool allows storing and managing crypto passphrases
 securely on Google secrets manager`,
@@ -53,7 +53,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.mkphrase.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.mksecret.yaml)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -73,10 +73,10 @@ func initConfig() {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".mkphrase" (without extension).
+		// Search config in home directory with name ".mksecret" (without extension).
 		viper.AddConfigPath(home)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".mkphrase")
+		viper.SetConfigName(".mksecret")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
