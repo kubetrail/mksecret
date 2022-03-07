@@ -1,4 +1,4 @@
-module github.com/kubetrail/mkphrase
+module github.com/kubetrail/mksecret
 
 go 1.17
 

@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/kubetrail/mkphrase/cmd"
+import "github.com/kubetrail/mksecret/cmd"
 
 func main() {
 	cmd.Execute()

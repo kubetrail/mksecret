@@ -6,8 +6,8 @@ import (
 	"syscall"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
-	"github.com/kubetrail/mkphrase/pkg/crypto"
-	"github.com/kubetrail/mkphrase/pkg/flags"
+	"github.com/kubetrail/mksecret/pkg/crypto"
+	"github.com/kubetrail/mksecret/pkg/flags"
 	"github.com/mr-tron/base58"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"

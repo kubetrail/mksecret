@@ -1,5 +1,5 @@
-# mkphrase
-CLI tool for storing and managing versions of crypto passphrases on Google secret manager.
+# mksecret
+CLI tool for storing and managing versions of secrets on Google secret manager.
 
 ## disclaimer
 >The use of this tool does not guarantee security or suitability
@@ -16,7 +16,7 @@ go install
 Install shell completion. For instance `bash` completion can be installed
 by adding following line to your `.bashrc`:
 ```bash
-source <(mkphrse completion bash)
+source <(mksecret completion bash)
 ```
 
 Create a Google cloud project and activate Secrets Manager API. Also
@@ -31,7 +31,7 @@ GOOGLE_APPLICATION_CREDENTIALS=service-account-file-path.json
 Passphrases are named entities that have versions. A new phrase version
 can be stored as follows:
 ```bash
-mkphrase set
+mksecret set
 Enter passphrase: this is a test phrase
                   NAME                   VERSION          PHRASE          
 ---------------------------------------+---------+------------------------
@@ -39,7 +39,7 @@ Enter passphrase: this is a test phrase
 ```
 Alternatively, a specific name can be provided
 ```bash
-mkphrase set --name=my-phrase
+mksecret set --name=my-phrase
 Enter passphrase: clarity upper basket money wheel
     NAME      VERSION               PHRASE              
 ------------+---------+---------------------------------
@@ -55,7 +55,7 @@ As you can see, if the named phrase does not already exist, it's version
 will be at `1`. Issuing the same command again using an existing named phrase
 will generate a new version:
 ```bash
-mkphrase set --name=my-phrase
+mksecret set --name=my-phrase
 Enter passphrase: tennis water wing code window leaf
     NAME      VERSION               PHRASE              
 ------------+---------+---------------------------------
@@ -66,7 +66,7 @@ Enter passphrase: tennis water wing code window leaf
 ## encrypt phrases before storing
 Additionally encrypt phrases before storing by using `--encrypt` flag:
 ```bash
-mkphrase set --encrypt
+mksecret set --encrypt
 Enter passphrase: bat country screen puzzle paper ice grain
 This input will be encrypted using your password
 Enter encryption password (min 8 char): 
@@ -82,7 +82,7 @@ password and then encrypts the input phrase using that AES key before storing.
 ## retrieve phrases
 Stored phrases can be listed:
 ```bash
-mkphrase list
+mksecret list
                   NAME                  
 ----------------------------------------
   5095fa73-7f24-4952-a258-968ed1d29e31  
@@ -91,14 +91,14 @@ mkphrase list
 And any particular phrase value can be fetched, which always fetches the
 `latest` version of the named phrase
 ```bash
-mkphrase get 5095fa73-7f24-4952-a258-968ed1d29e31
+mksecret get 5095fa73-7f24-4952-a258-968ed1d29e31
                   NAME                   VERSION          PHRASE          
 ---------------------------------------+---------+------------------------
   5095fa73-7f24-4952-a258-968ed1d29e31         1   this is a test phrase  
 ```
 A specific version can be fetched using `--version` flag:
 ```bash
-mkphrase get my-phrase --version=2
+mksecret get my-phrase --version=2
     NAME      VERSION               PHRASE              
 ------------+---------+---------------------------------
   my-phrase         2   tennis water wing code window   
@@ -107,7 +107,7 @@ mkphrase get my-phrase --version=2
 
 If the phrase was encrypted, you will be asked to provide the password:
 ```bash
-mkphrase get b9fc6cd0-dfc2-4297-b504-08f3da0a9773
+mksecret get b9fc6cd0-dfc2-4297-b504-08f3da0a9773
 Enter encryption password: 
                   NAME                   VERSION               PHRASE              
 ---------------------------------------+---------+---------------------------------
@@ -119,7 +119,7 @@ When a named phrase is deleted, all versions of secret material are
 deleted forever.
 > Please use caution when using this command
 ```bash
-mkphrase delete 5095fa73-7f24-4952-a258-968ed1d29e31
+mksecret delete 5095fa73-7f24-4952-a258-968ed1d29e31
 Type secret name to delete: 5095fa73-7f24-4952-a258-968ed1d29e31
 ```
 The above command will ask for confirmation, however, `--force` option
@@ -127,5 +127,5 @@ can be used to skip the confirmation and delete the secret without any
 confirmation.
 
 ```bash
-mkphrase delete 5095fa73-7f24-4952-a258-968ed1d29e31 --force
+mksecret delete 5095fa73-7f24-4952-a258-968ed1d29e31 --force
 ```

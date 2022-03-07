@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kubetrail/mkphrase/pkg/flags"
+	"github.com/kubetrail/mksecret/pkg/flags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
