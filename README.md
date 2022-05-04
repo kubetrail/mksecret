@@ -26,105 +26,87 @@ GOOGLE_PROJECT_ID=your-project-id
 GOOGLE_APPLICATION_CREDENTIALS=service-account-file-path.json
 ```
 
-## store a passphrase
-Passphrases are named entities that have versions. A new phrase version
-can be stored as follows:
+## store a secret
+A secret can be stored as a string.
 ```bash
-mksecret set
-Enter passphrase: this is a test phrase
-                  NAME                   VERSION          PHRASE          
----------------------------------------+---------+------------------------
-  5095fa73-7f24-4952-a258-968ed1d29e31         1   this is a test phrase  
+mksecret set --name=foo bar
 ```
-Alternatively, a specific name can be provided
-```bash
-mksecret set --name=my-phrase
-Enter passphrase: clarity upper basket money wheel
-    NAME      VERSION               PHRASE              
-------------+---------+---------------------------------
-  my-phrase         1   clarity upper basket money      
-                        wheel                           
 
-```
-> Please note that the phrase name, once created, cannot be changed later.
-> Furthermore, passphrases can only be entered via STDIN to avoid getting
+> Please note that the secret name, once created, cannot be changed later.
+> Furthermore, secrets are best entered via STDIN to avoid getting
 > them captured in command history or files on disk
 
-As you can see, if the named phrase does not already exist, it's version
-will be at `1`. Issuing the same command again using an existing named phrase
-will generate a new version:
 ```bash
-mksecret set --name=my-phrase
-Enter passphrase: tennis water wing code window leaf
-    NAME      VERSION               PHRASE              
-------------+---------+---------------------------------
-  my-phrase         2   tennis water wing code window   
-                        leaf                            
+mksecret set --name=foo
+```
+```text
+Enter secret as a string: bar 2
+bar 2
 ```
 
-## encrypt phrases before storing
-Additionally encrypt phrases before storing by using `--encrypt` flag:
+## retrieve the secret value
+Secret value can be retrieved formatted as `table`, `json` or `native`
 ```bash
-mksecret set --encrypt
-Enter passphrase: bat country screen puzzle paper ice grain
+mksecret get foo --output-format=table
+```
+```text
+  NAME   VERSION   PHRASE  
+-------+---------+---------
+  foo          2   bar 2   
+```
+
+As you can see the version is set at 2 since we created `foo` named secret
+twice. We can retrieve a particular version
+```bash
+mksecret get foo --output-format=table --version=1
+```
+```text
+  NAME   VERSION   PHRASE  
+-------+---------+---------
+  foo          1   bar     
+```
+
+## encrypt secrets before storing
+Secrets can be encrypted by using `--encrypt` flag:
+```bash
+mksecret set --name=encrypted-foo --encrypt my super secret string
+```
+```text
 This input will be encrypted using your password
 Enter encryption password (min 8 char): 
 Enter encryption password again: 
-                  NAME                   VERSION               PHRASE              
----------------------------------------+---------+---------------------------------
-  b9fc6cd0-dfc2-4297-b504-08f3da0a9773         1   bat country screen puzzle       
-                                                   paper ice grain                 
+my super secret string
 ```
+
 Behind the scenes the code generates an AES key deterministically using your
 password and then encrypts the input phrase using that AES key before storing.
 
 ## retrieve phrases
 Stored phrases can be listed:
 ```bash
-mksecret list
+mksecret list --output-format=table
+```
+```text
                   NAME                  
 ----------------------------------------
-  5095fa73-7f24-4952-a258-968ed1d29e31  
-  my-phrase                                                       
-```
-And any particular phrase value can be fetched, which always fetches the
-`latest` version of the named phrase
-```bash
-mksecret get 5095fa73-7f24-4952-a258-968ed1d29e31
-                  NAME                   VERSION          PHRASE          
----------------------------------------+---------+------------------------
-  5095fa73-7f24-4952-a258-968ed1d29e31         1   this is a test phrase  
-```
-A specific version can be fetched using `--version` flag:
-```bash
-mksecret get my-phrase --version=2
-    NAME      VERSION               PHRASE              
-------------+---------+---------------------------------
-  my-phrase         2   tennis water wing code window   
-                        leaf                            
+  foo  
+  encrypted-foo                                                       
 ```
 
-If the phrase was encrypted, you will be asked to provide the password:
-```bash
-mksecret get b9fc6cd0-dfc2-4297-b504-08f3da0a9773
-Enter encryption password: 
-                  NAME                   VERSION               PHRASE              
----------------------------------------+---------+---------------------------------
-  b9fc6cd0-dfc2-4297-b504-08f3da0a9773         1   bat country screen puzzle       
-                                                   paper ice grain                 
-```
 ## delete phrase
 When a named phrase is deleted, all versions of secret material are 
 deleted forever.
 > Please use caution when using this command
 ```bash
-mksecret delete 5095fa73-7f24-4952-a258-968ed1d29e31
-Type secret name to delete: 5095fa73-7f24-4952-a258-968ed1d29e31
+mksecret delete foo
+```
+```text
+Type secret name to delete: foo
 ```
 The above command will ask for confirmation, however, `--force` option
 can be used to skip the confirmation and delete the secret without any
 confirmation.
 
 ```bash
-mksecret delete 5095fa73-7f24-4952-a258-968ed1d29e31 --force
+mksecret delete encrypted-foo --force
 ```
