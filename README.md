@@ -9,9 +9,8 @@ for any particular use. Please review the code and use at your own risk.
 This step assumes you have [Go compiler toolchain](https://go.dev/dl/)
 installed on your system.
 
-Download the code to a folder and cd to the folder, then run
 ```bash
-go install
+go install github.com/kubetrail/mksecret@latest
 ```
 Install shell completion. For instance `bash` completion can be installed
 by adding following line to your `.bashrc`:

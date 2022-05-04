@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"github.com/kubetrail/mksecret/pkg/app"
 	"github.com/kubetrail/mksecret/pkg/flags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -66,7 +67,7 @@ func Delete(cmd *cobra.Command, args []string) error {
 	}
 
 	labels := secret.GetLabels()
-	if value, ok := labels[KeyManagedBy]; !ok || value != AppName {
+	if value, ok := labels[app.KeyManagedBy]; !ok || value != app.Name {
 		return fmt.Errorf("secret is not being managed by this app")
 	}
 

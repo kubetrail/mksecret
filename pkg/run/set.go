@@ -1,15 +1,19 @@
 package run
 
 import (
-	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"path"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
-	"github.com/google/uuid"
 	"github.com/googleapis/gax-go/v2/apierror"
+	"github.com/kubetrail/bip39/pkg/mnemonics"
+	"github.com/kubetrail/bip39/pkg/prompts"
+	"github.com/kubetrail/mksecret/pkg/app"
 	"github.com/kubetrail/mksecret/pkg/crypto"
 	"github.com/kubetrail/mksecret/pkg/flags"
 	"github.com/mr-tron/base58"
@@ -26,11 +30,15 @@ func Set(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	persistentFlags := getPersistentFlags(cmd)
 
-	b := filepath.Base
-	_ = viper.BindPFlag(flags.Name, cmd.Flags().Lookup(b(flags.Name)))
-	_ = viper.BindPFlag(flags.Encrypt, cmd.Flags().Lookup(b(flags.Encrypt)))
+	_ = viper.BindPFlag(flags.Name, cmd.Flag(flags.Name))
+	_ = viper.BindPFlag(flags.Encrypt, cmd.Flag(flags.Encrypt))
 	name := viper.GetString(flags.Name)
 	encrypt := viper.GetBool(flags.Encrypt)
+
+	prompt, err := prompts.Status()
+	if err != nil {
+		return fmt.Errorf("failed to get prompt status: %w", err)
+	}
 
 	if err := setAppCredsEnvVar(persistentFlags.ApplicationCredentials); err != nil {
 		err := fmt.Errorf("could not set Google Application credentials env. var: %w", err)
@@ -38,7 +46,7 @@ func Set(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(name) == 0 {
-		name = uuid.New().String()
+		return fmt.Errorf("please input value for --name flag")
 	}
 
 	if errs := validation.IsDNS1123Label(name); len(errs) > 0 {
@@ -53,10 +61,10 @@ func Set(cmd *cobra.Command, args []string) error {
 	defer client.Close()
 
 	labels := map[string]string{
-		KeyManagedBy: AppName,
+		app.KeyManagedBy: app.Name,
 	}
 	if encrypt {
-		labels[KeyEncrypted] = ValueTrue
+		labels[app.KeyEncrypted] = app.ValueTrue
 	}
 
 	// Create the request to create the secret.
@@ -96,31 +104,34 @@ func Set(cmd *cobra.Command, args []string) error {
 	}
 
 	labels = secret.GetLabels()
-	if value, ok := labels[KeyManagedBy]; !ok || value != AppName {
+	if value, ok := labels[app.KeyManagedBy]; !ok || value != app.Name {
 		return fmt.Errorf("secret is not being managed by this app")
 	}
-	if value, ok := labels[KeyEncrypted]; ok && value == ValueTrue {
+	if value, ok := labels[app.KeyEncrypted]; ok && value == app.ValueTrue {
 		encrypt = true
 	}
 	if encrypt {
-		if value, ok := labels[KeyEncrypted]; !ok || value != ValueTrue {
+		if value, ok := labels[app.KeyEncrypted]; !ok || value != app.ValueTrue {
 			return fmt.Errorf("secret was not previously encrypted and this property is immutable")
 		}
 	}
 
-	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Enter passphrase: "); err != nil {
-		return fmt.Errorf("failed to write to output: %w", err)
-	}
-
+	var secretInput string
 	var key []byte
-	inputReader := bufio.NewReader(cmd.InOrStdin())
-	input, err := inputReader.ReadString('\n')
-	if err != nil {
-		return fmt.Errorf("failed to read from input: %w", err)
-	}
 
-	if len(input) == 0 {
-		return fmt.Errorf("invalid input of zero length")
+	if len(args) > 0 {
+		secretInput = strings.Join(args, " ")
+	} else {
+		if prompt {
+			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Enter secret as a string: "); err != nil {
+				return fmt.Errorf("failed to write to output: %w", err)
+			}
+		}
+
+		secretInput, err = mnemonics.Read(cmd.InOrStdin())
+		if err != nil {
+			return fmt.Errorf("failed to read secret: %w", err)
+		}
 	}
 
 	if encrypt {
@@ -158,16 +169,16 @@ func Set(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to generate new AES key: %w", err)
 		}
 
-		in, err := crypto.EncryptWithAesKey([]byte(input), key)
+		in, err := crypto.EncryptWithAesKey([]byte(secretInput), key)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt input: %w", err)
 		}
 
-		input = base58.Encode(in)
+		secretInput = base58.Encode(in)
 	}
 
 	// Build the request.
-	data := []byte(input)
+	data := []byte(secretInput)
 	dataCrc32C := int64(Crc32Sum(data))
 	addSecretVersionReq := &secretmanagerpb.AddSecretVersionRequest{
 		Parent: secret.Name,
@@ -207,18 +218,44 @@ func Set(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	table := tablewriter.NewWriter(cmd.OutOrStdout())
-	table.SetHeader([]string{"Name", "Version", "Phrase"})
-	table.Append(
-		[]string{
-			name,
-			filepath.Base(version.GetName()),
-			string(payload),
-		},
-	)
-	table.SetBorder(false)
-	table.SetColumnSeparator(" ")
-	table.Render() // Send output
+	switch persistentFlags.OutputFormat {
+	case flags.OutputFormatNative:
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), string(payload)); err != nil {
+			return fmt.Errorf("failed to write to output: %w", err)
+		}
+	case flags.OutputFormatJson:
+		jb, err := json.Marshal(
+			struct {
+				Name    string `json:"name,omitempty"`
+				Version string `json:"version,omitempty"`
+				Payload string `json:"payload,omitempty"`
+			}{
+				Name:    name,
+				Version: path.Base(version.GetName()),
+				Payload: string(payload),
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("failed to serialize output json: %w", err)
+		}
+
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), string(jb)); err != nil {
+			return fmt.Errorf("failed to write to output: %w", err)
+		}
+	case flags.OutputFormatTable:
+		table := tablewriter.NewWriter(cmd.OutOrStdout())
+		table.SetHeader([]string{"Name", "Version", "Phrase"})
+		table.Append(
+			[]string{
+				name,
+				filepath.Base(version.GetName()),
+				string(payload),
+			},
+		)
+		table.SetBorder(false)
+		table.SetColumnSeparator(" ")
+		table.Render() // Send output
+	}
 
 	return nil
 }

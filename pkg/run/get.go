@@ -1,11 +1,14 @@
 package run
 
 import (
+	"encoding/json"
 	"fmt"
+	"path"
 	"path/filepath"
 	"syscall"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"github.com/kubetrail/mksecret/pkg/app"
 	"github.com/kubetrail/mksecret/pkg/crypto"
 	"github.com/kubetrail/mksecret/pkg/flags"
 	"github.com/mr-tron/base58"
@@ -59,10 +62,10 @@ func Get(cmd *cobra.Command, args []string) error {
 	}
 
 	labels := secret.GetLabels()
-	if value, ok := labels[KeyManagedBy]; !ok || value != AppName {
+	if value, ok := labels[app.KeyManagedBy]; !ok || value != app.Name {
 		return fmt.Errorf("secret is not being managed by this app")
 	}
-	if value, ok := labels[KeyEncrypted]; ok && value == ValueTrue {
+	if value, ok := labels[app.KeyEncrypted]; ok && value == app.ValueTrue {
 		encrypted = true
 	}
 
@@ -106,18 +109,44 @@ func Get(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	table := tablewriter.NewWriter(cmd.OutOrStdout())
-	table.SetHeader([]string{"Name", "Version", "Phrase"})
-	table.Append(
-		[]string{
-			name,
-			filepath.Base(result.GetName()),
-			string(payload),
-		},
-	)
-	table.SetBorder(false)
-	table.SetColumnSeparator(" ")
-	table.Render() // Send output
+	switch persistentFlags.OutputFormat {
+	case flags.OutputFormatNative:
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), string(payload)); err != nil {
+			return fmt.Errorf("failed to write to output: %w", err)
+		}
+	case flags.OutputFormatJson:
+		jb, err := json.Marshal(
+			struct {
+				Name    string `json:"name,omitempty"`
+				Version string `json:"version,omitempty"`
+				Payload string `json:"payload,omitempty"`
+			}{
+				Name:    name,
+				Version: path.Base(result.GetName()),
+				Payload: string(payload),
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("failed to serialize output json: %w", err)
+		}
+
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), string(jb)); err != nil {
+			return fmt.Errorf("failed to write to output: %w", err)
+		}
+	case flags.OutputFormatTable:
+		table := tablewriter.NewWriter(cmd.OutOrStdout())
+		table.SetHeader([]string{"Name", "Version", "Phrase"})
+		table.Append(
+			[]string{
+				name,
+				filepath.Base(result.GetName()),
+				string(payload),
+			},
+		)
+		table.SetBorder(false)
+		table.SetColumnSeparator(" ")
+		table.Render() // Send output
+	}
 
 	return nil
 }

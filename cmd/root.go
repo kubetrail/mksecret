@@ -18,7 +18,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/kubetrail/mksecret/pkg/flags"
 	"github.com/spf13/cobra"
@@ -30,8 +29,8 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "mksecret",
-	Short: "Store and retrieve crypto passphrases securely",
-	Long: `This CLI tool allows storing and managing crypto passphrases
+	Short: "Store secrets securely on Google Secrets engine",
+	Long: `This CLI tool allows storing and managing secrets
 securely on Google secrets manager`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
@@ -47,7 +46,6 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	f := rootCmd.PersistentFlags()
-	b := filepath.Base
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -59,8 +57,9 @@ func init() {
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	f.String(b(flags.GoogleProjectID), "", "Google project ID (Env: GOOGLE_PROJECT_ID)")
-	f.String(b(flags.GoogleApplicationCredentials), "", "Google app credentials (Env: GOOGLE_APPLICATION_CREDENTIALS)")
+	f.String(flags.GoogleProjectID, "", "Google project ID (Env: GOOGLE_PROJECT_ID)")
+	f.String(flags.GoogleApplicationCredentials, "", "Google app credentials (Env: GOOGLE_APPLICATION_CREDENTIALS)")
+	f.String(flags.OutputFormat, "native", "Output format (native, json, table)")
 }
 
 // initConfig reads in config file and ENV variables if set.

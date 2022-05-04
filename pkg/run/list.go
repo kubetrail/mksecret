@@ -1,10 +1,13 @@
 package run
 
 import (
+	"encoding/json"
 	"fmt"
-	"path/filepath"
+	"path"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"github.com/kubetrail/mksecret/pkg/app"
+	"github.com/kubetrail/mksecret/pkg/flags"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
@@ -37,7 +40,7 @@ func List(cmd *cobra.Command, args []string) error {
 		Parent:    fmt.Sprintf("projects/%s", persistentFlags.Project),
 		PageSize:  0,
 		PageToken: "",
-		Filter:    fmt.Sprintf("labels.%s=%s", KeyManagedBy, AppName),
+		Filter:    fmt.Sprintf("labels.%s=%s", app.KeyManagedBy, app.Name),
 	}
 
 	// Call the API.
@@ -46,19 +49,57 @@ func List(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to access secret version: %w", err)
 	}
 
-	for {
-		secret, err := secrets.Next()
-		if err == iterator.Done {
-			break
+	switch persistentFlags.OutputFormat {
+	case flags.OutputFormatNative:
+		for {
+			secret, err := secrets.Next()
+			if err == iterator.Done {
+				break
+			}
+			if err != nil {
+				return fmt.Errorf("failed to list secrets: %w", err)
+			}
+
+			if _, err := fmt.Fprintln(cmd.OutOrStdout(), path.Base(secret.GetName())); err != nil {
+				return fmt.Errorf("failed to write to output: %w", err)
+			}
 		}
+	case flags.OutputFormatJson:
+		outputList := make([]string, 0, 128)
+		for {
+			secret, err := secrets.Next()
+			if err == iterator.Done {
+				break
+			}
+			if err != nil {
+				return fmt.Errorf("failed to list secrets: %w", err)
+			}
+
+			outputList = append(outputList, path.Base(secret.GetName()))
+		}
+		jb, err := json.Marshal(outputList)
 		if err != nil {
-			return fmt.Errorf("failed to list secrets: %w", err)
+			return fmt.Errorf("failed to serialize output json: %w", err)
 		}
 
-		table.Append([]string{filepath.Base(secret.GetName())})
-	}
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), string(jb)); err != nil {
+			return fmt.Errorf("failed to write to output: %w", err)
+		}
+	case flags.OutputFormatTable:
+		for {
+			secret, err := secrets.Next()
+			if err == iterator.Done {
+				break
+			}
+			if err != nil {
+				return fmt.Errorf("failed to list secrets: %w", err)
+			}
 
-	table.Render() // Send output
+			table.Append([]string{path.Base(secret.GetName())})
+		}
+
+		table.Render() // Send output
+	}
 
 	return nil
 }
