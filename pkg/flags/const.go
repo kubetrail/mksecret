@@ -6,8 +6,15 @@ const (
 )
 
 const (
-	Name    = "name"
-	Version = "version"
-	Force   = "force"
-	Encrypt = "encrypt"
+	Name         = "name"
+	Version      = "version"
+	Force        = "force"
+	Encrypt      = "encrypt"
+	OutputFormat = "output-format"
+)
+
+const (
+	OutputFormatNative = "native"
+	OutputFormatJson   = "json"
+	OutputFormatTable  = "table"
 )

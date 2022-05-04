@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"hash/crc32"
 	"os"
-	"path/filepath"
 
 	"github.com/kubetrail/mksecret/pkg/flags"
 	"github.com/spf13/cobra"
@@ -14,23 +13,26 @@ import (
 type persistentFlagValues struct {
 	ApplicationCredentials string `json:"applicationCredentials,omitempty"`
 	Project                string `json:"project,omitempty"`
+	OutputFormat           string `json:"outputFormat,omitempty"`
 }
 
 func getPersistentFlags(cmd *cobra.Command) persistentFlagValues {
 	rootCmd := cmd.Root().PersistentFlags()
-	b := filepath.Base
 
-	_ = viper.BindPFlag(flags.GoogleProjectID, rootCmd.Lookup(b(flags.GoogleProjectID)))
-	_ = viper.BindPFlag(flags.GoogleApplicationCredentials, rootCmd.Lookup(b(flags.GoogleApplicationCredentials)))
+	_ = viper.BindPFlag(flags.GoogleProjectID, rootCmd.Lookup(flags.GoogleProjectID))
+	_ = viper.BindPFlag(flags.GoogleApplicationCredentials, rootCmd.Lookup(flags.GoogleApplicationCredentials))
+	_ = viper.BindPFlag(flags.OutputFormat, rootCmd.Lookup(flags.OutputFormat))
 
 	_ = viper.BindEnv(flags.GoogleProjectID, "GOOGLE_PROJECT_ID")
 
 	applicationCredentials := viper.GetString(flags.GoogleApplicationCredentials)
 	project := viper.GetString(flags.GoogleProjectID)
+	outputFormat := viper.GetString(flags.OutputFormat)
 
 	return persistentFlagValues{
 		ApplicationCredentials: applicationCredentials,
 		Project:                project,
+		OutputFormat:           outputFormat,
 	}
 }
 

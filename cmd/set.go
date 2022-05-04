@@ -29,7 +29,6 @@ var setCmd = &cobra.Command{
 	Short: "Set passphrase as a new version",
 	Long:  `This command writes passphrase as a new version to the named passphrase`,
 	RunE:  run.Set,
-	Args:  cobra.ExactArgs(0),
 }
 
 func init() {

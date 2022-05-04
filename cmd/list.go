@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kubetrail/mksecret/pkg/app"
 	"github.com/kubetrail/mksecret/pkg/run"
 	"github.com/spf13/cobra"
 )
@@ -34,14 +35,14 @@ var listCmd = &cobra.Command{
 		strings.ReplaceAll(
 			listCmdLong,
 			"labelKey",
-			run.KeyManagedBy,
+			app.KeyManagedBy,
 		),
 		"appName",
-		run.AppName,
+		app.Name,
 	),
 	RunE:    run.List,
 	Args:    cobra.ExactArgs(0),
-	Example: fmt.Sprintf("%s list", run.AppName),
+	Example: fmt.Sprintf("%s list", app.Name),
 }
 
 func init() {
