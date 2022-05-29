@@ -1,13 +1,9 @@
 package run
 
 import (
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"encoding/json"
 	"fmt"
-	"path"
-	"path/filepath"
-	"syscall"
-
-	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/kubetrail/mksecret/pkg/app"
 	"github.com/kubetrail/mksecret/pkg/crypto"
 	"github.com/kubetrail/mksecret/pkg/flags"
@@ -17,7 +13,11 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/term"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
+	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"path"
+	"path/filepath"
+	"syscall"
 )
 
 func Get(cmd *cobra.Command, args []string) error {
@@ -131,6 +131,25 @@ func Get(cmd *cobra.Command, args []string) error {
 		}
 
 		if _, err := fmt.Fprintln(cmd.OutOrStdout(), string(jb)); err != nil {
+			return fmt.Errorf("failed to write to output: %w", err)
+		}
+	case flags.OutputFormatYaml:
+		jb, err := yaml.Marshal(
+			struct {
+				Name    string `json:"name,omitempty"`
+				Version string `json:"version,omitempty"`
+				Payload string `json:"payload,omitempty"`
+			}{
+				Name:    name,
+				Version: path.Base(result.GetName()),
+				Payload: string(payload),
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("failed to serialize output yaml: %w", err)
+		}
+
+		if _, err := fmt.Fprint(cmd.OutOrStdout(), string(jb)); err != nil {
 			return fmt.Errorf("failed to write to output: %w", err)
 		}
 	case flags.OutputFormatTable:
