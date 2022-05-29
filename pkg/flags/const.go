@@ -16,5 +16,6 @@ const (
 const (
 	OutputFormatNative = "native"
 	OutputFormatJson   = "json"
+	OutputFormatYaml   = "yaml"
 	OutputFormatTable  = "table"
 )
