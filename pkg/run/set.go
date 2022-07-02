@@ -2,11 +2,16 @@ package run
 
 import (
 	"bytes"
-	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"encoding/json"
 	"fmt"
+	"path"
+	"path/filepath"
+	"strings"
+	"syscall"
+
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/googleapis/gax-go/v2/apierror"
-	"github.com/kubetrail/bip39/pkg/mnemonics"
+	"github.com/kubetrail/bip32/pkg/keys"
 	"github.com/kubetrail/bip39/pkg/prompts"
 	"github.com/kubetrail/mksecret/pkg/app"
 	"github.com/kubetrail/mksecret/pkg/crypto"
@@ -20,10 +25,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/util/validation"
-	"path"
-	"path/filepath"
-	"strings"
-	"syscall"
 )
 
 func Set(cmd *cobra.Command, args []string) error {
@@ -32,12 +33,26 @@ func Set(cmd *cobra.Command, args []string) error {
 
 	_ = viper.BindPFlag(flags.Name, cmd.Flag(flags.Name))
 	_ = viper.BindPFlag(flags.Encrypt, cmd.Flag(flags.Encrypt))
+	_ = viper.BindPFlag(flags.Passphrase, cmd.Flag(flags.Passphrase))
+	_ = viper.BindPFlag(flags.NoPrompt, cmd.Flag(flags.NoPrompt))
+
 	name := viper.GetString(flags.Name)
 	encrypt := viper.GetBool(flags.Encrypt)
+	passphrase := viper.GetString(flags.Passphrase)
+	noPrompt := viper.GetBool(flags.NoPrompt)
+
+	// enforce encryption if passphrase is explicitly provided
+	if len(passphrase) > 0 {
+		encrypt = true
+	}
 
 	prompt, err := prompts.Status()
 	if err != nil {
 		return fmt.Errorf("failed to get prompt status: %w", err)
+	}
+
+	if noPrompt {
+		prompt = false
 	}
 
 	if err := setAppCredsEnvVar(persistentFlags.ApplicationCredentials); err != nil {
@@ -128,7 +143,7 @@ func Set(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		secretInput, err = mnemonics.Read(cmd.InOrStdin())
+		secretInput, err = keys.Read(cmd.InOrStdin())
 		if err != nil {
 			return fmt.Errorf("failed to read secret: %w", err)
 		}
@@ -141,30 +156,35 @@ func Set(cmd *cobra.Command, args []string) error {
 		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Enter encryption password (min 8 char): "); err != nil {
 			return fmt.Errorf("failed to write to output: %w", err)
 		}
-		encryptionKey, err := term.ReadPassword(syscall.Stdin)
-		if err != nil {
-			return fmt.Errorf("failed to read encryption password from input: %w", err)
-		}
-		if _, err := fmt.Fprintln(cmd.OutOrStdout()); err != nil {
-			return fmt.Errorf("failed to write to output: %w", err)
+
+		if len(passphrase) == 0 {
+			encryptionKey, err := term.ReadPassword(syscall.Stdin)
+			if err != nil {
+				return fmt.Errorf("failed to read encryption password from input: %w", err)
+			}
+			if _, err := fmt.Fprintln(cmd.OutOrStdout()); err != nil {
+				return fmt.Errorf("failed to write to output: %w", err)
+			}
+
+			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Enter encryption password again: "); err != nil {
+				return fmt.Errorf("failed to write to output: %w", err)
+			}
+			encryptionKeyConfirm, err := term.ReadPassword(syscall.Stdin)
+			if err != nil {
+				return fmt.Errorf("failed to read encryption password from input: %w", err)
+			}
+			if _, err := fmt.Fprintln(cmd.OutOrStdout()); err != nil {
+				return fmt.Errorf("failed to write to output: %w", err)
+			}
+
+			if !bytes.Equal(encryptionKey, encryptionKeyConfirm) {
+				return fmt.Errorf("passwords do not match")
+			}
+
+			passphrase = string(encryptionKey)
 		}
 
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Enter encryption password again: "); err != nil {
-			return fmt.Errorf("failed to write to output: %w", err)
-		}
-		encryptionKeyConfirm, err := term.ReadPassword(syscall.Stdin)
-		if err != nil {
-			return fmt.Errorf("failed to read encryption password from input: %w", err)
-		}
-		if _, err := fmt.Fprintln(cmd.OutOrStdout()); err != nil {
-			return fmt.Errorf("failed to write to output: %w", err)
-		}
-
-		if !bytes.Equal(encryptionKey, encryptionKeyConfirm) {
-			return fmt.Errorf("passwords do not match")
-		}
-
-		key, err = crypto.NewAesKeyFromPassphrase(encryptionKey)
+		key, err = crypto.NewAesKeyFromPassphrase([]byte(passphrase))
 		if err != nil {
 			return fmt.Errorf("failed to generate new AES key: %w", err)
 		}

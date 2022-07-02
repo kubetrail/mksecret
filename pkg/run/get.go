@@ -1,9 +1,15 @@
 package run
 
 import (
-	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"encoding/json"
 	"fmt"
+	"io"
+	"path"
+	"path/filepath"
+
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	"github.com/kubetrail/bip39/pkg/passphrases"
+	"github.com/kubetrail/bip39/pkg/prompts"
 	"github.com/kubetrail/mksecret/pkg/app"
 	"github.com/kubetrail/mksecret/pkg/crypto"
 	"github.com/kubetrail/mksecret/pkg/flags"
@@ -11,25 +17,33 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/term"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/util/validation"
-	"path"
-	"path/filepath"
-	"syscall"
 )
 
 func Get(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	persistentFlags := getPersistentFlags(cmd)
 
-	b := filepath.Base
-	_ = viper.BindPFlag(flags.Version, cmd.Flags().Lookup(b(flags.Version)))
+	_ = viper.BindPFlag(flags.Version, cmd.Flag(flags.Version))
+	_ = viper.BindPFlag(flags.Passphrase, cmd.Flag(flags.Passphrase))
+	_ = viper.BindPFlag(flags.NoPrompt, cmd.Flag(flags.NoPrompt))
 
 	name := args[0]
 	version := viper.GetString(flags.Version)
+	passphrase := viper.GetString(flags.Passphrase)
+	noPrompt := viper.GetBool(flags.NoPrompt)
 	encrypted := false
+
+	prompt, err := prompts.Status()
+	if err != nil {
+		return fmt.Errorf("failed to get prompt status: %w", err)
+	}
+
+	if noPrompt {
+		prompt = false
+	}
 
 	if err := setAppCredsEnvVar(persistentFlags.ApplicationCredentials); err != nil {
 		err := fmt.Errorf("could not set Google Application credentials env. var: %w", err)
@@ -83,17 +97,15 @@ func Get(cmd *cobra.Command, args []string) error {
 	payload := result.Payload.GetData()
 
 	if encrypted {
-		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "Enter encryption password: "); err != nil {
-			return fmt.Errorf("failed to write to output: %w", err)
+		if len(passphrase) == 0 {
+			if prompt {
+				passphrase, err = passphrases.Prompt(cmd.OutOrStdout())
+			} else {
+				passphrase, err = passphrases.Prompt(io.Discard)
+			}
 		}
-		encryptionKey, err := term.ReadPassword(syscall.Stdin)
-		if err != nil {
-			return fmt.Errorf("failed to read encryption password from input: %w", err)
-		}
-		if _, err := fmt.Fprintln(cmd.OutOrStdout()); err != nil {
-			return fmt.Errorf("failed to write to output: %w", err)
-		}
-		key, err := crypto.NewAesKeyFromPassphrase([]byte(encryptionKey))
+
+		key, err := crypto.NewAesKeyFromPassphrase([]byte(passphrase))
 		if err != nil {
 			return fmt.Errorf("failed to generate new AES key: %w", err)
 		}
