@@ -1,9 +1,11 @@
 package run
 
 import (
-	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"encoding/json"
 	"fmt"
+	"path"
+
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/kubetrail/mksecret/pkg/app"
 	"github.com/kubetrail/mksecret/pkg/flags"
 	"github.com/olekukonko/tablewriter"
@@ -11,7 +13,6 @@ import (
 	"google.golang.org/api/iterator"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 	"gopkg.in/yaml.v3"
-	"path"
 )
 
 func List(cmd *cobra.Command, args []string) error {

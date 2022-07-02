@@ -11,6 +11,8 @@ const (
 	Force        = "force"
 	Encrypt      = "encrypt"
 	OutputFormat = "output-format"
+	Passphrase   = "passphrase"
+	NoPrompt     = "no-prompt"
 )
 
 const (

@@ -59,7 +59,27 @@ func init() {
 
 	f.String(flags.GoogleProjectID, "", "Google project ID (Env: GOOGLE_PROJECT_ID)")
 	f.String(flags.GoogleApplicationCredentials, "", "Google app credentials (Env: GOOGLE_APPLICATION_CREDENTIALS)")
-	f.String(flags.OutputFormat, "native", "Output format (native, json, table)")
+	f.String(flags.OutputFormat, flags.OutputFormatNative, "Output format (native, json, yaml, table)")
+
+	_ = rootCmd.RegisterFlagCompletionFunc(
+		flags.OutputFormat,
+		func(
+			cmd *cobra.Command,
+			args []string,
+			toComplete string,
+		) (
+			[]string,
+			cobra.ShellCompDirective,
+		) {
+			return []string{
+					flags.OutputFormatNative,
+					flags.OutputFormatJson,
+					flags.OutputFormatYaml,
+					flags.OutputFormatTable,
+				},
+				cobra.ShellCompDirectiveDefault
+		},
+	)
 }
 
 // initConfig reads in config file and ENV variables if set.

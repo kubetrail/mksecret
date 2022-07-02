@@ -38,4 +38,6 @@ func init() {
 	b := filepath.Base
 
 	f.String(b(flags.Version), "latest", "Get specific version")
+	f.String(flags.Passphrase, "", "Encryption passphrase if required")
+	f.Bool(flags.NoPrompt, false, "Hide all prompts")
 }

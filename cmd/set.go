@@ -26,8 +26,8 @@ import (
 // setCmd represents the set command
 var setCmd = &cobra.Command{
 	Use:   "set",
-	Short: "Set passphrase as a new version",
-	Long:  `This command writes passphrase as a new version to the named passphrase`,
+	Short: "Set a secret as a new version",
+	Long:  `This command writes a secret as a new version to the named secret`,
 	RunE:  run.Set,
 }
 
@@ -36,6 +36,28 @@ func init() {
 	f := setCmd.Flags()
 	b := filepath.Base
 
-	f.String(b(flags.Name), "", "Name tag for the passphrase (DNS1123 label format)")
-	f.Bool(b(flags.Encrypt), false, "Encrypt passphrase by entering password")
+	f.String(b(flags.Name), "", "Name tag for the secret (DNS1123 label format)")
+	f.Bool(b(flags.Encrypt), false, "Turn on encryption (true when passphrase is provided)")
+	f.String(flags.Passphrase, "", "Encryption passphrase")
+	f.Bool(flags.NoPrompt, false, "Hide all prompts")
+
+	_ = setCmd.RegisterFlagCompletionFunc(
+		flags.Name,
+		func(
+			cmd *cobra.Command,
+			args []string,
+			toComplete string,
+		) (
+			[]string,
+			cobra.ShellCompDirective,
+		) {
+			return []string{
+					"example-names-in-dns1123-format",
+					"my-mnemonic-1",
+					"eth-hex-seed-key",
+					"my-super-secret",
+				},
+				cobra.ShellCompDirectiveDefault
+		},
+	)
 }
